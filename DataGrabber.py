@@ -9,8 +9,41 @@ import time
 import datetime
 import timeit
 import requests
+import optparse
 
-debug = False
+# optparse is outstanding, handling many types and
+# generating a --help very easily.  Typical Python module with named, optional arguments
+# For instance:
+### Make a parser
+parser = optparse.OptionParser("usage: %prog [options] <input file.ROOT> \n")
+### Add options
+parser.add_option ('-v', dest='debug', action="store_true", default=False,
+                   help="Turn on verbose debugging.")
+parser.add_option ('--days', dest='days', action="store_true", default=0,
+                   help="Days before start time to request data? Default zero.")
+parser.add_option ('--hours', dest='hours', action="store_true", default=0,
+                   help="Hours before start time to request data? Default zero.")
+parser.add_option ('--minutes', dest='minutes', action="store_true", default=0,
+                   help="Minutes before start time to request data? Default zero.")
+parser.add_option ('--seconds', dest='seconds', action="store_true", default=0,
+                   help="Seconds before start time to request data? Default zero.")
+### Get the options and argument values from the parser....
+options, args = parser.parse_args()
+### ...and assign them to variables. (No declaration needed, just like bash!)
+debug   = options.debug
+days    = options.days    
+hours   = options.hours   
+minutes = options.minutes 
+seconds = options.seconds 
+
+# If no time interval set, default to 1 second
+if days == 0 and hours == 0 and minutes == 0 and seconds == 0: seconds = 1
+
+if debug:
+    print ("Time interval: days = "+str(days)+
+           ", hours = "  +str(hours  )+
+           ", minutes = "+str(minutes)+
+           ", seconds = "+str(seconds)+".")
 
 def read_URL_to_file (URL, filename):
     with urllib.request.urlopen(URL) as url_returns:
@@ -20,11 +53,10 @@ def read_URL_to_file (URL, filename):
                 f.write("%s\n" % datum)
                 
     return 
-one_day = datetime.timedelta(days=1)
-one_sec = datetime.timedelta(seconds=1)
+interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
 now = datetime.datetime.now()
-starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(now - one_sec)
+starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(now - interval)
 stopptime = '{0:%Y-%m-%d+%H:%M:%S}'.format(now )
 
 ##starttime = '{0:%Y-%m-%d}'.format(now - one_day)
