@@ -117,6 +117,9 @@ for deviceName in deviceNames:
         if str(response.content).count('logger_get') > 0:
             print (response.content) #Should go to a log file. 
             exit()
+        elif str(response.content).count('utc_seconds'+deviceName) < 1:
+            print (response.content) #Should go to a log file. 
+            exit()
         # Write data to file
         file.write(response.content)
     # Dump the file into a pandas DataFrame 
