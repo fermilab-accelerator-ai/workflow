@@ -23,13 +23,13 @@ parser.add_argument ('-v', dest='debug', action="store_true", default=False,
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
                    help="YYYY-MM-DD hh:mm:ss")
-parser.add_argument ('--days', dest='days', action="store_true", default=0,
+parser.add_argument ('--days', dest='days', type=float, default=0,
                    help="Days before start time to request data? Default zero.")
-parser.add_argument ('--hours', dest='hours', action="store_true", default=0,
+parser.add_argument ('--hours', dest='hours', type=float, default=0,
                    help="Hours before start time to request data? Default zero.")
-parser.add_argument ('--minutes', dest='minutes', action="store_true", default=0,
+parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
                    help="Minutes before start time to request data? Default zero.")
-parser.add_argument ('--seconds', dest='seconds', action="store_true", default=0,
+parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
                    help="Seconds before start time to request data? Default zero.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
