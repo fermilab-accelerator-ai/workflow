@@ -7,35 +7,52 @@ import pandas as pd
 import urllib
 import time
 import datetime
+from dateutil import parser as dtpars
 import timeit
 import requests
-import optparse
+import argparse
 
 # optparse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
 # For instance:
 ### Make a parser
-parser = optparse.OptionParser("usage: %prog [options] <input file.ROOT> \n")
+parser = argparse.ArgumentParser(description="usage: %prog [options] <input file.ROOT> \n")
 ### Add options
-parser.add_option ('-v', dest='debug', action="store_true", default=False,
+parser.add_argument ('-v', dest='debug', action="store_true", default=False,
                    help="Turn on verbose debugging.")
-parser.add_option ('--days', dest='days', action="store_true", default=0,
+# Maybe just a string formatted in UTC datetime.
+parser.add_argument ('--stopat',  dest='stopat', default='',
+                   help="YYYY-MM-DD hh:mm:ss")
+parser.add_argument ('--days', dest='days', action="store_true", default=0,
                    help="Days before start time to request data? Default zero.")
-parser.add_option ('--hours', dest='hours', action="store_true", default=0,
+parser.add_argument ('--hours', dest='hours', action="store_true", default=0,
                    help="Hours before start time to request data? Default zero.")
-parser.add_option ('--minutes', dest='minutes', action="store_true", default=0,
+parser.add_argument ('--minutes', dest='minutes', action="store_true", default=0,
                    help="Minutes before start time to request data? Default zero.")
-parser.add_option ('--seconds', dest='seconds', action="store_true", default=0,
+parser.add_argument ('--seconds', dest='seconds', action="store_true", default=0,
                    help="Seconds before start time to request data? Default zero.")
 ### Get the options and argument values from the parser....
-options, args = parser.parse_args()
+options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
 debug   = options.debug
+stopat  = options.stopat
 days    = options.days    
 hours   = options.hours   
 minutes = options.minutes 
 seconds = options.seconds 
 
+# Datetime for when to stop the reading
+today = datetime.datetime.today()
+
+stopptime = ''
+if stopat == '': #Default: Midnight at the start of today
+    stopptime = '{0:%Y-%m-%d+00:00:00}'.format(today )
+else:            # or attempt to use the string passed in by user
+    stopdt =  dtpars.parse(stopat)
+    stopptime = '{0:%Y-%m-%d+%H:%M:%S}'.format(stopdt)
+
+if debug: print ("Stop time: "+stopptime)
+    
 # If no time interval set, default to 1 second
 if days == 0 and hours == 0 and minutes == 0 and seconds == 0: seconds = 1
 
@@ -53,15 +70,15 @@ def read_URL_to_file (URL, filename):
                 f.write("%s\n" % datum)
                 
     return 
+# Build a datetime interval to offset starttime before stopptime. 
 interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
-now = datetime.datetime.now()
-starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(now - interval)
-stopptime = '{0:%Y-%m-%d+%H:%M:%S}'.format(now )
+# Set the time to start the data-series request window
+starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(dtpars.parse(stopptime.replace('+',' ')) - interval)
 
-##starttime = '{0:%Y-%m-%d}'.format(now - one_day)
-##stopptime = '{0:%Y-%m-%d}'.format(now )
-##
+if debug:
+    print ('Data request start time:' + starttime)
+    print ('Data request stop time:' + stopptime)
 # logger_get ACL command documentation: https://www-bd.fnal.gov/issues/wiki/ACLCommandLogger_get
 URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/date_format='utc_seconds'/ignore_db_format/start=\""+starttime+"\"/end=\""+stopptime+"\"/node="
 
