@@ -11,6 +11,7 @@ from dateutil import parser as dtpars
 import timeit
 import requests
 import argparse
+from pathlib import Path
 
 # optparse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
@@ -31,6 +32,8 @@ parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
                    help="Minutes before start time to request data? Default zero.")
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
                    help="Seconds before start time to request data? Default zero.")
+parser.add_argument ('--outdir',  dest='outdir', default='',
+                   help="Directory to write output file.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -40,7 +43,9 @@ days    = options.days
 hours   = options.hours   
 minutes = options.minutes 
 seconds = options.seconds 
+outdir  = options.outdir
 
+unixtimestr = str(time.time())
 # Datetime for when to stop the reading
 today = datetime.datetime.today()
 
@@ -123,5 +128,13 @@ for deviceName in deviceNames:
 if debug: print (dfdict.values())
 df = pd.concat(dfdict.values(), axis=1)
 h5key = 'x' #str(time.time())
+
+outfilename = 'MLData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
 #Fun with hdf5
-df.to_hdf('moardata.h5', key=h5key, mode='w')
+abspath = Path().absolute()
+current_dir = abspath
+if outdir == '': outdir = current_dir
+
+df.to_hdf(outdir+'/'+outfilename, key=h5key, mode='w')
+
+
