@@ -1,15 +1,10 @@
 import h5py
 from io import StringIO
-import matplotlib
-matplotlib.use('agg')  #Workaround for missing tkinter
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import urllib
-import time
 import datetime
 from dateutil import parser as dtpars
-import timeit
+import time
 import requests
 import argparse
 from pathlib import Path
@@ -62,39 +57,33 @@ if debug: print ("Stop time: "+stopptime)
     
 # If no time interval set, default to 1 second
 if days == 0 and hours == 0 and minutes == 0 and seconds == 0: seconds = 1
-
 if debug:
     print ("Time interval: days = "+str(days)+
            ", hours = "  +str(hours  )+
            ", minutes = "+str(minutes)+
            ", seconds = "+str(seconds)+".")
 
-def read_URL_to_file (URL, filename):
-    with urllib.request.urlopen(URL) as url_returns:
-        data = url_returns.read().decode('utf-8').split('\n')
-        with open(filename, 'w') as f:
-            for datum in data:
-                f.write("%s\n" % datum)
-                
-    return 
 # Build a datetime interval to offset starttime before stopptime. 
 interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
 # Set the time to start the data-series request window
 starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(dtpars.parse(stopptime.replace('+',' ')) - interval)
 
-if debug:
+if debug or True:
     print ('Data request start time:' + starttime)
     print ('Data request stop time:' + stopptime)
 
 D43DataLoggerNode = 'EventC'
-#Fun with hdf5
+#Output file needs a meaningful name and location
 abspath = Path().absolute()
 current_dir = abspath
 if outdir == '':
     outdir = str(current_dir) + '/'
 outfilename = outdir+'/MLEventData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
 
+
+if debug or True:
+    print ("Data will be saved into "+outfilename)
     
 # Retrieve the timestamps of broadcasting for every TCLK event over this time span.
 URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=event_log/start_time=\""+starttime+"\"/stop_time=\""+stopptime+"\"/event="
@@ -116,9 +105,13 @@ for eventdec in range(0, 0xFF+1):
     # Set the column names
     df.columns = ['date','time','SCmicrosec']
     # Merge date and time to make datetime. Then drop original columns.
-    df['datetime'] = df['date'] + '+' + df['time'] 
+    df['datetime'] = df['date'] + ' ' + df['time'] 
+    # Convert to UNIX epoch seconds
+    df['epoch'] = pd.to_datetime(df['datetime']).astype('int64')/1.0E9
+    # Clean up these columns
     dropthese = ['date','time']
     df.drop(dropthese, inplace=True, axis=1)
+    
     if debug: print (df)
     # Save df to file.
     df.to_hdf(outfilename,'Event'+TCLKevent, append=True)
