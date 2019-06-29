@@ -31,6 +31,8 @@ parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
                    help="Seconds before start time to request data? Default zero.")
 parser.add_argument ('--outdir',  dest='outdir', default='',
                    help="Directory to write output file.")
+parser.add_argument ('--maxEvt',  dest='maxEvt', default=0xFF,
+                   help="Highest hex code to loop over.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -41,6 +43,7 @@ hours   = options.hours
 minutes = options.minutes 
 seconds = options.seconds 
 outdir  = options.outdir
+maxEvt  = options.maxEvt
 
 unixtimestr = str(time.time())
 # Datetime for when to stop the reading
@@ -87,7 +90,8 @@ if debug or True:
     
 # Retrieve the timestamps of broadcasting for every TCLK event over this time span.
 URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=event_log/start_time=\""+starttime+"\"/stop_time=\""+stopptime+"\"/event="
-for eventdec in range(0, 0xFF+1):
+nodata = True
+for eventdec in range(0, maxEvt+1):
     TCLKevent ='{:02x}'.format(eventdec)
     thisURL = URL + TCLKevent
     if debug: print (thisURL)
@@ -99,6 +103,7 @@ for eventdec in range(0, 0xFF+1):
     soup = BeautifulSoup(response.text, "html.parser")
     str1 = soup.get_text()
     if debug: print (str1)
+    nodata = False # First time we get a nontrivial response.
     if str1.count('No occurrences of event') > 0: continue
     ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
     df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
@@ -117,6 +122,6 @@ for eventdec in range(0, 0xFF+1):
     df.to_hdf(outfilename,'Event'+TCLKevent, append=True)
     
 
-
+if nodata: print ("\n\n    No data returned for any event.\n\n")
 
 
