@@ -139,6 +139,5 @@ abspath = Path().absolute()
 current_dir = abspath
 if outdir == '': outdir = current_dir
 
-df.to_hdf(outdir+'/'+outfilename, key=h5key, mode='w')
-
+df.to_hdf(str(outdir)+'/'+outfilename, key=h5key, mode='w')
 
