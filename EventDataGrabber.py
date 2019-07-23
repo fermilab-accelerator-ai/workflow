@@ -9,6 +9,7 @@ import requests
 import argparse
 from pathlib import Path
 from bs4 import BeautifulSoup
+import shutil
 
 # optparse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
@@ -30,20 +31,28 @@ parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
                    help="Seconds before start time to request data? Default zero.")
 parser.add_argument ('--outdir',  dest='outdir', default='',
-                   help="Directory to write output file.")
+                   help="Directory to write final output file.")
+parser.add_argument ('--draftdir',  dest='draftdir', default='',
+                   help="Directory to draft output file.")
 parser.add_argument ('--maxEvt',  dest='maxEvt', default=0xFF,
                    help="Highest hex code to loop over.")
+parser.add_argument ('-o',  dest='oneAndDone',  action="store_true", default=False,
+                   help="Stop after a single TCLK event yields data.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
-debug   = options.debug
-stopat  = options.stopat
-days    = options.days    
-hours   = options.hours   
-minutes = options.minutes 
-seconds = options.seconds 
-outdir  = options.outdir
-maxEvt  = options.maxEvt
+debug    = options.debug
+stopat   = options.stopat
+days     = options.days    
+hours    = options.hours   
+minutes  = options.minutes 
+seconds  = options.seconds 
+outdir   = options.outdir
+draftdir = options.draftdir
+if isinstance(options.maxEvt, str):
+    maxEvt = int(options.maxEvt, 16)
+else: maxEvt = options.maxEvt
+oneAndDone = options.oneAndDone
 
 unixtimestr = str(time.time())
 # Datetime for when to stop the reading
@@ -82,15 +91,22 @@ abspath = Path().absolute()
 current_dir = abspath
 if outdir == '':
     outdir = str(current_dir) + '/'
-outfilename = outdir+'/MLEventData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
+
+if draftdir == '':
+    draftdir = str(current_dir) + '/'
+
+draftfilename = draftdir+'/MLEventData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
+outfilename   =   outdir+'/MLEventData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
 
 
 if debug or True:
-    print ("Data will be saved into "+outfilename)
+    print ("Data will be saved into "+draftfilename+"\n initiallly, then moved to \n"+outfilename)
     
 # Retrieve the timestamps of broadcasting for every TCLK event over this time span.
 URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=event_log/start_time=\""+starttime+"\"/stop_time=\""+stopptime+"\"/event="
 nodata = True
+maxEvtstr = str(hex(maxEvt)).upper()
+if debug or True: print ("Highest event number to check will be: "+maxEvtstr)
 for eventdec in range(0, maxEvt+1):
     TCLKevent ='{:02x}'.format(eventdec)
     thisURL = URL + TCLKevent
@@ -107,6 +123,7 @@ for eventdec in range(0, maxEvt+1):
     if str1.count('No occurrences of event') > 0: continue
     ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
     df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
+    #if len(df) < 1: continue #..,Skip event if no data for it.
     # Set the column names
     df.columns = ['date','time','SCmicrosec']
     # Merge date and time to make datetime. Then drop original columns.
@@ -116,12 +133,18 @@ for eventdec in range(0, maxEvt+1):
     # Clean up these columns
     dropthese = ['date','time']
     df.drop(dropthese, inplace=True, axis=1)
-    
+
     if debug: print (df)
     # Save df to file.
-    df.to_hdf(outfilename,'Event'+TCLKevent, append=True)
-    
+    df.to_hdf(draftfilename,'Event'+TCLKevent, append=True)
+    if oneAndDone and not nodata:
+        print ("'One and done' option -o: Stopped after getting and saving data for $"+TCLKevent)
+        break
 
+import subprocess
 if nodata: print ("\n\n    No data returned for any event.\n\n")
-
-
+if not outfilename == draftfilename:
+    if debug: print ("Moving from "+draftfilename+" to "+outfilename+".")
+    # shutil.move in Python 3 handles the foreign filesystem correctly by using copy and delete
+    #shutil.move(draftfilename, outfilename)
+    subprocess.run(["mv "+draftfilename+" "+outfilename,], shell=True, check=True)
