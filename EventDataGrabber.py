@@ -145,6 +145,4 @@ import subprocess
 if nodata: print ("\n\n    No data returned for any event.\n\n")
 if not outfilename == draftfilename:
     if debug: print ("Moving from "+draftfilename+" to "+outfilename+".")
-    # shutil.move in Python 3 handles the foreign filesystem correctly by using copy and delete
-    #shutil.move(draftfilename, outfilename)
     subprocess.run(["mv "+draftfilename+" "+outfilename,], shell=True, check=True)
