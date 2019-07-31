@@ -32,18 +32,21 @@ parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
                    help="Minutes before start time to request data? Default zero.")
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
                    help="Seconds before start time to request data? Default zero.")
+parser.add_argument ('--draftdir',  dest='draftdir', default='',
+                   help="Directory to write output file.")
 parser.add_argument ('--outdir',  dest='outdir', default='',
                    help="Directory to write output file.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
-debug   = options.debug
-stopat  = options.stopat
-days    = options.days    
-hours   = options.hours   
-minutes = options.minutes 
-seconds = options.seconds 
-outdir  = options.outdir
+debug     = options.debug
+stopat    = options.stopat
+days      = options.days    
+hours     = options.hours   
+minutes   = options.minutes 
+seconds   = options.seconds 
+outdir    = options.outdir
+draftdir  = options.draftdir
 
 unixtimestr = str(time.time())
 # Datetime for when to stop the reading
