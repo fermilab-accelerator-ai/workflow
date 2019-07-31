@@ -12,6 +12,9 @@ import timeit
 import requests
 import argparse
 from pathlib import Path
+from io import StringIO
+from bs4 import BeautifulSoup
+import subprocess
 
 # optparse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
@@ -20,22 +23,22 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="usage: %prog [options] <input file.ROOT> \n")
 ### Add options
 parser.add_argument ('-v', dest='debug', action="store_true", default=False,
-                   help="Turn on verbose debugging.")
+                     help="Turn on verbose debugging.")
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
-                   help="YYYY-MM-DD hh:mm:ss")
+                     help="YYYY-MM-DD hh:mm:ss")
 parser.add_argument ('--days', dest='days', type=float, default=0,
-                   help="Days before start time to request data? Default zero.")
+                     help="Days before start time to request data? Default zero.")
 parser.add_argument ('--hours', dest='hours', type=float, default=0,
-                   help="Hours before start time to request data? Default zero.")
+                     help="Hours before start time to request data? Default zero.")
 parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
-                   help="Minutes before start time to request data? Default zero.")
+                     help="Minutes before start time to request data? Default zero.")
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
-                   help="Seconds before start time to request data? Default zero.")
+                     help="Seconds before start time to request data? Default zero unless all are zero, then 1 second.")
 parser.add_argument ('--draftdir',  dest='draftdir', default='',
-                   help="Directory to write output file.")
+                     help="Directory to write output file.")
 parser.add_argument ('--outdir',  dest='outdir', default='',
-                   help="Directory to write output file.")
+                     help="Directory to write output file.")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -47,6 +50,14 @@ minutes   = options.minutes
 seconds   = options.seconds 
 outdir    = options.outdir
 draftdir  = options.draftdir
+
+# Get the current directory of execution
+abspath = Path().absolute()
+current_dir = str(abspath)
+
+if outdir == '': outdir = current_dir
+if draftdir == '': draftdir = current_dir
+
 
 unixtimestr = str(time.time())
 # Datetime for when to stop the reading
@@ -75,8 +86,7 @@ def read_URL_to_file (URL, filename):
         data = url_returns.read().decode('utf-8').split('\n')
         with open(filename, 'w') as f:
             for datum in data:
-                f.write("%s\n" % datum)
-                
+                f.write("%s\n" % datum)                
     return 
 # Build a datetime interval to offset starttime before stopptime. 
 interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
@@ -101,6 +111,9 @@ deviceNames = ['B:VIMIN', 'B_VIMIN', 'B:VIMAX', 'B_VIMAX', 'B:IMINER', 'B:NGMPS'
                'I:MXIB',   'I:IB'     ]
 
 
+draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
+outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
+
 tempfilename = 'temp_file.txt'
 timestamps = np.zeros(shape=(1,1))
 
@@ -110,37 +123,23 @@ for deviceName in deviceNames:
     tempURL = URL + deviceName
     if debug: print (tempURL)
 
-    # Download device data to local ASCII file
-    with open(tempfilename, "wb") as file:
-        # Column headers
-        headers = 'utc_seconds'+deviceName+' \t '+deviceName+'\n'
-        # Write headers encoded
-        file.write(headers.encode('utf-8'))
-        # Get request
-        response = requests.get(tempURL)
-        if str(response.content).count('logger_get') > 0:
-            print (response.content) #Should go to a log file. 
-            exit()
-        elif str(response.content).count('No values') > 0:
-            print (response.content) #Should go to a log file. 
-            exit()
-        # Write data to file
-        file.write(response.content)
-    # Dump the file into a pandas DataFrame 
-    columns = ('utc_seconds'+deviceName, deviceName) # Will get these set up higher.
-    dfdict[deviceName] = pd.read_csv(tempfilename, delim_whitespace=True, names=columns, skiprows=1)
-    timestamps_thisdevice = dfdict[deviceName]['utc_seconds'+deviceName].values
-    if debug: print (dfdict[deviceName])
+    # Download device data to a string
+    response = requests.get(tempURL)
+    if response is None:
+        if debug: print (thisURL+"\n begat no reponse.")
+        continue
+    soup = BeautifulSoup(response.text, "html.parser")
+    str1 = soup.get_text()
+    if debug: print (str1)
+    ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
+    df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
+    #if len(df) < 1: continue #..,Skip event if no data for it.
+    # Set the column names
+    df.columns = ['utc_seconds', 'value']
+    # Save df to file.
+    df.to_hdf(draftfilename, deviceName, append=True)
 
-if debug: print (dfdict.values())
-df = pd.concat(dfdict.values(), axis=1)
-h5key = 'x' #str(time.time())
-
-outfilename = 'MLData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
-#Fun with hdf5
-abspath = Path().absolute()
-current_dir = abspath
-if outdir == '': outdir = current_dir
-
-df.to_hdf(str(outdir)+'/'+outfilename, key=h5key, mode='w')
+if not outfilename == draftfilename:
+    if debug: print ("Moving from "+draftfilename+" to "+outfilename+".")
+    subprocess.run(["mv "+draftfilename+" "+outfilename,], shell=True, check=True)
 
