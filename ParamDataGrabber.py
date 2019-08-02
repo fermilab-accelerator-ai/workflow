@@ -108,7 +108,7 @@ deviceNames = ['B:VIMIN', 'B_VIMIN', 'B:VIMAX', 'B_VIMAX', 'B:IMINER', 'B:NGMPS'
                'B:ACMNPG', 'B:ACMNIG', 'B:ACMXPG', 'B:ACMXIG', 'B:DCPG' , 'B:DCIG', 'B:VIPHAS',
                'B_ACMNPG', 'B_ACMNIG', 'B_ACMXPG', 'B_ACMXIG', 'B_DCPG' , 'B_DCIG', 'B_VIPHAS',
                'B:PS1VGP', 'B:PS1VGM', 'B:GMPS1V', 'B:PS2VGP', 'B:PS2VGM', 'B:GMPS2V', 'B:PS3VGP', 'B:PS3VGM', 'B:GMPS3V', 'B:PS4VGP', 'B:PS4VGM', 'B:GMPS4V',
-               'I:MXIB',   'I:IB'     ]
+               'I:MXIB',   'I:IB'    , 'I:MDAT40']
 
 
 draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
@@ -126,14 +126,19 @@ for deviceName in deviceNames:
     # Download device data to a string
     response = requests.get(tempURL)
     if response is None:
-        if debug: print (thisURL+"\n begat no reponse.")
+        if debug: print (tempURL+"\n begat no reponse.")
         continue
     soup = BeautifulSoup(response.text, "html.parser")
     str1 = soup.get_text()
     if debug: print (str1)
+    if str1.count('No values'): 
+        if debug: print (tempURL+"\n "+str1)
+        continue
     ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
     df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
-    #if len(df) < 1: continue #..,Skip event if no data for it.
+    if len(df) < 1: 
+        if debug: print ('Dataframe length < 1.')
+        continue #..,Skip event if no data for it.
     # Set the column names
     df.columns = ['utc_seconds', 'value']
     # Save df to file.
