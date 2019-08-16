@@ -30,46 +30,58 @@ debug       = options.debug
 outdir      = options.outdir
 quick       = options.quick
 maxplots    = options.maxplots
-outfilename = 'QualityChecks.pdf'
+justthefile = infilename.split('/')[infilename.count('/')]
+outfilename = 'QualityChecks'+justthefile+'.pdf'
 
 # Open the file
-infile = h5py.File(infilename, 'r+')
-colcount = len(infile.keys())
+infile = h5py.File(infilename, 'r')
+filekeys = list (infile.keys())
+infile.close()
+keycount = len (filekeys)
 plotnum = 1
 timedel = 1./30.
 bincount = 500
 with PdfPages(outfilename) as pdf:
     # Loop over ACNET devices (hdf5 top set of keys)
-    for key in infile.keys():
+    for key in  filekeys:
+        f = h5py.File(infilename, 'r')
         tempdf = pd.read_hdf(infilename, key)
-        if debug: print ("  "+key)
+        print ("  "+key)
         if debug: print (tempdf.shape)
-        cols = tempdf.columns.to_list()
+        cols = list (tempdf.columns)
         if debug: print (cols)
         # Get the two column names of interest:
-        timecol = ''
-        valcol = ''
-        for col in cols:
-            if col.count('utc_seconds') > 0:
-                timecol = col
+        timecolname = ''
+        valcolname = ''
+        for colname in cols:
+            if colname.count('utc_seconds') > 0:
+                timecolname = colname
             else:
-                valcol = col
+                valcolname = colname
+        if debug: print ('timecol = ',timecolname,'  &   valcol = ',valcolname)
         # Calculate sample-to-sample time deltas (units of timedel)
-        timedeltas = tempdf[timecol].diff() #/ timedel
+        timelist = tempdf[timecolname]#.sort_values()
+        timedeltas = timelist.diff() #/ timedel
         if debug: print (timedeltas.describe())
         plt.figure(figsize=(8, 6))
-        binheights, binctrs, _ = plt.hist(timedeltas, bins=bincount, log=True,
+        binheights, binctrs, _ = plt.hist(timedeltas, bins=bincount, log=True, 
                                           range = (1.1*timedeltas.min(), 1.1*timedeltas.max()) )
         #fig = timedeltas.plot.hist(log=True, bins=bincount)
-        print(type(timedeltas[1]))
-        mode = timedeltas.mode()
-        #print (str(binheights.max())+", ",str(mode))
-        print (str(mode))
-        plt.text(mode, binheights.max(), "Mode: "+str(mode))
-        plt.xlabel('Consecutive time deltas (1 s ticks)')
-        plt.title(col)
+        if debug: print(type(timedeltas[1]))
+        mode = timedeltas.mode()[0]
+        if debug: print (str(mode))
+        modestr = '{:.3f}'.format(timedeltas.mode()[0] )
+        textstr = "Mode: "+modestr
+        maxstr = '{:.3f}'.format(timedeltas.max())
+        minstr = '{:.3f}'.format(timedeltas.min())
+        textstr += '\nRange: ('+ minstr +', '+ maxstr+')'
+        stdstr = '{:.3f}'.format(timedeltas.std())
+        textstr += "\nStdDev: "+ stdstr
+        plt.text( 0.70, 0.85, textstr, transform=plt.gca().transAxes) #Plot relative to bottom left at 0,0 
+        plt.xlabel('Consecutive time deltas [seconds]')
+        daterangestr = justthefile.split('From_MLrn_')[1].rstrip('.h5.pdf')
+        plt.title(valcolname + '\n' + daterangestr)
         pdf.savefig()
-        #plt.close()
         if quick and plotnum >= maxplots: break
         plotnum += 1
         
