@@ -23,22 +23,22 @@ import subprocess
 parser = argparse.ArgumentParser(description="usage: %prog [options] <input file.ROOT> \n")
 ### Add options
 parser.add_argument ('-v', dest='debug', action="store_true", default=False,
-                     help="Turn on verbose debugging.")
+                     help="Turn on verbose debugging. (default: False)")
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
-                     help="YYYY-MM-DD hh:mm:ss")
+                     help="YYYY-MM-DD hh:mm:ss (default: last midnight)")
 parser.add_argument ('--days', dest='days', type=float, default=0,
-                     help="Days before start time to request data? Default zero.")
+                     help="Days before start time to request data? (default: %(default)s).")
 parser.add_argument ('--hours', dest='hours', type=float, default=0,
-                     help="Hours before start time to request data? Default zero.")
+                     help="Hours before start time to request data? (default: %(default)s)")
 parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
-                     help="Minutes before start time to request data? Default zero.")
+                     help="Minutes before start time to request data? (default: %(default)s)")
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
-                     help="Seconds before start time to request data? Default zero unless all are zero, then 1 second.")
+                     help="Seconds before start time to request data? (default: %(default)s unless all are zero, then 1).")
 parser.add_argument ('--draftdir',  dest='draftdir', default='',
-                     help="Directory to write output file.")
+                     help="Directory to draft output file while appending. (default: pwd)")
 parser.add_argument ('--outdir',  dest='outdir', default='',
-                     help="Directory to write output file.")
+                     help="Directory to write final output file. (default: pwd)")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -100,26 +100,17 @@ if debug:
 # logger_get ACL command documentation: https://www-bd.fnal.gov/issues/wiki/ACLCommandLogger_get
 URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/date_format='utc_seconds'/ignore_db_format/start=\""+starttime+"\"/end=\""+stopptime+"\"/node="
 
+# Get the list of parameter names 
+import GMPSAIutilities as gmpsutils
+deviceNames = gmpsutils.getParamListFromTextFile(debug=debug)
+
 D43DataLoggerNode = 'MLrn'
 URL = URL + D43DataLoggerNode + '+'
-deviceNames = ['B:VIMIN', 'B_VIMIN', 'B:VIMAX', 'B_VIMAX', 'B:IMINER', 'B:NGMPS', 'B:VINHBT', 'B:GMPSFF', 'B:GMPSBT',
-               'B:IMINST', 'B:IPHSTC', 'B:IMINXG', 'B:IMINXO', 'B:IMAXXG', 'B:IMAXXO', 'B_VINHBT', 'B_GMPSFF', 'B_GMPSBT',
-               'B_IMINST', 'B_IPHSTC', 'B_IMINXG', 'B_IMINXO', 'B_IMAXXG', 'B_IMAXXO',
-               'B:ACMNPG', 'B:ACMNIG', 'B:ACMXPG', 'B:ACMXIG', 'B:DCPG' , 'B:DCIG', 'B:VIPHAS',
-               'B_ACMNPG', 'B_ACMNIG', 'B_ACMXPG', 'B_ACMXIG', 'B_DCPG' , 'B_DCIG', 'B_VIPHAS',
-               'B:PS1VGP', 'B:PS1VGM', 'B:GMPS1V', 'B:PS2VGP', 'B:PS2VGM', 'B:GMPS2V', 'B:PS3VGP', 'B:PS3VGM', 'B:GMPS3V', 'B:PS4VGP', 'B:PS4VGM', 'B:GMPS4V',
-               'I:MXIB',   'I:IB'    , 'I:MDAT40']
-
-
 draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
 outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
 
-tempfilename = 'temp_file.txt'
-timestamps = np.zeros(shape=(1,1))
-
-dfdict = {} #Need a place to keep each dataframe
+# Loop over device names, retrieving data from 
 for deviceName in deviceNames:
-    tempfilename = 'tempfile'+deviceName+'.txt'
     tempURL = URL + deviceName
     if debug: print (tempURL)
 
