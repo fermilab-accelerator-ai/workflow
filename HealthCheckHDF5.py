@@ -20,6 +20,8 @@ parser.add_argument ('-q','--quick', dest='quick', action="store_true", default=
                      help="Stop after maxparams plots are rendered. (default: F)")
 parser.add_argument ('--noplots', dest='noplots', action="store_true", default=False,
                      help="Skip plot making, save no plot file. (default: F)")
+parser.add_argument ('--nodb', dest='nodb', action="store_true", default=False,
+                     help="Skip database entry making. (default: F)")
 parser.add_argument ('--maxparams',  dest='maxparams', default=2,
                      help="Max parameters to loop if -q. (default: 2).")
 parser.add_argument ('--outdir',  dest='outdir', default='',
@@ -35,6 +37,7 @@ infilename  = options.infilename
 if not os.path.isfile(infilename): exit ('File not found: '+infilename)
 debug       = options.debug
 noplots     = options.noplots
+nodb        = options.nodb
 outdir      = options.outdir
 quick       = options.quick
 maxparams    = options.maxparams
@@ -50,8 +53,9 @@ keycount = len (filekeys)
 keynum = 1
 timedel = 1./30.
 bincount = 500
-conn = sqlite3.connect(dbname)
-dbcurs = conn.cursor()
+if not nodb:
+    conn = sqlite3.connect(dbname)
+    dbcurs = conn.cursor()
 
 StartTime = re.findall(r"\d\d\d\d-\d\d-\d\d\+\d\d:\d\d:\d\d",justthefile)[0]
 if debug: print ('StartTime:')
@@ -66,7 +70,6 @@ if not noplots: pdf = PdfPages(outdir+outfilename)
 for key in  filekeys:
     if quick and keynum > maxparams: break
     keynum += 1
-    #need this? jmsj 2019.08.29# f = h5py.File(infilename, 'r')
     tempdf = pd.read_hdf(infilename, key)
     print ("  "+key)
     if debug: print (tempdf.shape)
@@ -81,17 +84,57 @@ for key in  filekeys:
         else:
             valcolname = colname
     if debug: print ('timecol = ',timecolname,'  &   valcol = ',valcolname)
+    
+    valdf = tempdf[valcolname]
+    if debug: print (valdf.describe())
+
+    # Get some stats to make plots, and store for long-term time trends
+    statnames = ['mode','std','min','max']
+    valstatsdict = {}
+    valstatsdict['mode'] = valdf.mode()[0] # Zeroth mode only
+    valstatsdict['std' ] = valdf.std()
+    valstatsdict['min' ] = valdf.min()
+    valstatsdict['max' ] = valdf.max()
+    if debug: print (valstatsdict)
+
+    if not nodb:
+        upsertstr = 'REPLACE INTO ACNETparameterStats (epochUTCsec, paramname, statname, statval) VALUES ('
+        upsertstr += str(epoch_time) +', "'+key +'", '
+        for statname in statnames: 
+            cmdstr = upsertstr +'"'+statname +'", '+str(valstatsdict[statname])+');'
+            print (cmdstr)
+            dbcurs.execute(cmdstr)
+            conn.commit()
+    
     # Calculate sample-to-sample time deltas (units of timedel)
     timelist = tempdf[timecolname]#.sort_values()
     timedeltas = timelist.diff() #/ timedel
     if debug: print (timedeltas.describe())
     if debug: print(type(timedeltas[1]))
 
+    # Get some stats to make plots, and store for long-term time trends
+    tdelstatsdict = {}
+    tdelstatsdict['mode'] = timedeltas.mode()[0] # Zeroth mode only
+    tdelstatsdict['std' ] = timedeltas.std()
+    tdelstatsdict['min' ] = timedeltas.min()
+    tdelstatsdict['max' ] = timedeltas.max()
+    if debug: print (tdelstatsdict)
+
+    if not nodb: 
+        # Also database entries for the time deltas
+        # Now the paramname is like Interval_B:IMIN
+        upsertstr = upsertstr.replace(key,'Interval_'+key)
+        for statname in statnames: # Same stats but on consecutive entry time deltas
+            cmdstr = upsertstr +'"'+statname +'", '+str(tdelstatsdict[statname])+');'
+            print (cmdstr)
+            dbcurs.execute(cmdstr)
+            conn.commit()
+
     # Nicely formatted strings for human-friendly display
-    modstr = '{:.3f}'.format(statsdict['mode'] )
-    stdstr = '{:.3f}'.format(statsdict['std' ] )
-    minstr = '{:.3f}'.format(statsdict['min' ] )
-    maxstr = '{:.3f}'.format(statsdict['max' ] )
+    modstr = '{:.3f}'.format(tdelstatsdict['mode'] )
+    stdstr = '{:.3f}'.format(tdelstatsdict['std' ] )
+    minstr = '{:.3f}'.format(tdelstatsdict['min' ] )
+    maxstr = '{:.3f}'.format(tdelstatsdict['max' ] )
 
     textstr = "Mode: "+modstr
     textstr += '\nRange: ('+ minstr +', '+ maxstr+')'
