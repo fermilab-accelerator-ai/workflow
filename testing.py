@@ -7,7 +7,7 @@ from progress.bar import Bar
 import seaborn as sns
 
 debug=True
-dfmaxrow= 120
+dfmaxrow= 60
 
 #infilename = '/pnfs/ldrd/accelai/tape/MLParamData_1562734866.2472222_From_MLrn_2019-07-09+00:00:00_to_2019-07-10+00:00:00.h5'
 
@@ -46,9 +46,9 @@ df['fittedmin'] = df['B_VIMIN'] + df['B:IMINER']/10.0
 df['datetime'] = pd.to_datetime(df['utc_secondsB:VIMIN'],unit='s', yearfirst=True)
 
 
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(8, 5))
 sns.set(style="darkgrid")
-plt.subplot(211)
+#plt.subplot(211)
 serieslist = ['B_VIMIN','fittedmin','B:VIMIN','calcVIMIN']
 sns.lineplot(x='datetime', y='B_VIMIN'  , data=df)
 sns.lineplot(x='datetime', y='fittedmin', data=df)
@@ -57,19 +57,19 @@ sns.lineplot(x='datetime', y='calcVIMIN', data=df)
 plt.legend(labels = serieslist, loc='upper right')
 plt.savefig('testplot.png')
 
-plt.figure(figsize=(8, 6))
-plt.subplot(211)
+plt.figure(figsize=(8, 3))
+#plt.subplot(211)
 df['meander'] = df['fittedmin'] - df['B_VIMIN']
 df['Rx']      = df['B:VIMIN']   - df['B_VIMIN']
 df['calcRx']  = df['calcVIMIN'] - df['B_VIMIN']
-sns.lineplot(x='datetime', y='meander', data=df)
-sns.lineplot(x='datetime', y='Rx'     , data=df)
-sns.lineplot(x='datetime', y='calcRx' , data=df)
-plt.legend(labels=['meander', 'Rx', 'calcRx'], loc='upper right')
-plt.ylabel('Amperes') 
-plt.xlabel('') 
-plt.gca().xaxis.set_ticklabels([]) # Same as plot below
-plt.subplot(212)
+#sns.lineplot(x='datetime', y='meander', data=df)
+#sns.lineplot(x='datetime', y='Rx'     , data=df)
+#sns.lineplot(x='datetime', y='calcRx' , data=df)
+#plt.legend(labels=['meander', 'Rx', 'calcRx'], loc='upper right')
+#plt.ylabel('Amperes') 
+#plt.xlabel('') 
+#plt.gca().xaxis.set_ticklabels([]) # Same as plot below
+#plt.subplot(212)
 df['appliedRx'] = df['meander']+df['Rx']
 df['appliedcalcRx'] = df['meander']+df['calcRx']
 sns.lineplot(x='datetime', y='appliedRx', data=df)
