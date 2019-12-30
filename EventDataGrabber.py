@@ -9,9 +9,8 @@ import requests
 import argparse
 from pathlib import Path
 from bs4 import BeautifulSoup
-import shutil
 
-# optparse is outstanding, handling many types and
+# ArgParse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
 # For instance:
 ### Make a parser
