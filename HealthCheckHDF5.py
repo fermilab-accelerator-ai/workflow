@@ -28,6 +28,8 @@ parser.add_argument ('--outdir',  dest='outdir', default='',
                      help="Directory to write final output file. (default: pwd)")
 parser.add_argument ('--db',  dest='dbname', default='GMPSAI.db',
                      help="Name of sqlite3 database file to save caculated stats into. (default: GMPSAI.db)")
+parser.add_argument ('--find',  dest='checkfor', default='',
+                     help="String to check for among the hdf5 file's top layer keys.")
 
 
 ### Get the options and argument values from the parser....
@@ -44,6 +46,7 @@ maxparams    = options.maxparams
 justthefile = infilename.split('/')[infilename.count('/')]
 outfilename = 'QualityChecks'+justthefile+'.pdf'
 dbname      = options.dbname
+checkfor    = options.checkfor
 
 # Open the file
 infile = h5py.File(infilename, 'r')
@@ -56,6 +59,16 @@ bincount = 500
 if not nodb:
     conn = sqlite3.connect(dbname)
     dbcurs = conn.cursor()
+
+# Are we just checking for a certain substring in the keys? 
+if checkfor != '':
+    foundkeys = []
+    for key in filekeys:
+        if key.count(checkfor) >0: foundkeys.append(key)
+    if len(foundkeys) >0: 
+        print (infilename+'\n  contained matching keys:',foundkeys)
+    else: print (infilename+' -- No matching keys.')
+    exit()
 
 StartTime = re.findall(r"\d\d\d\d-\d\d-\d\d\+\d\d:\d\d:\d\d",justthefile)[0]
 if debug: print ('StartTime:')
@@ -102,7 +115,7 @@ for key in  filekeys:
         upsertstr += str(epoch_time) +', "'+key +'", '
         for statname in statnames: 
             cmdstr = upsertstr +'"'+statname +'", '+str(valstatsdict[statname])+');'
-            print (cmdstr)
+            if debug: print (cmdstr)
             dbcurs.execute(cmdstr)
             conn.commit()
     
@@ -126,7 +139,7 @@ for key in  filekeys:
         upsertstr = upsertstr.replace(key,'Interval_'+key)
         for statname in statnames: # Same stats but on consecutive entry time deltas
             cmdstr = upsertstr +'"'+statname +'", '+str(tdelstatsdict[statname])+');'
-            print (cmdstr)
+            if debug: print (cmdstr)
             dbcurs.execute(cmdstr)
             conn.commit()
 
