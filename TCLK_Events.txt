@@ -1,0 +1,46 @@
+$00,CLK	Super Cycle and Master Clock Reset Marks start of supercycle	
+$04,CLK	MTA Pulse on next $11	    
+$0C,CLK	15 Hz; synchronized to GMPS BMIN Delayed   
+$0E,BSTR First Booster Beam Reset After a Pre-pulse Cycle    
+$11,BSTR Booster Reset for Null Cycle; generated at GMPS BMIN Delayed			      
+$12,BSTR Booster Reset for Beam Pre-pulse Cycle; generated at GMPS BMIN Delayed; always preceeded by $08  
+$13,BSTR Booster Reset for Fixed Target Beam Cycle; generated at GMPS BMIN Delayed	    
+$14,BSTR Booster Reset for MI/Muon Studies; generated at GMPS BMIN Delayed	    
+$15,BSTR Booster Reset for NUMI Beam Cycle; generated at GMPS BMIN Delayed	 
+$16,BSTR Booster Reset for MI Studies; generated at GMPS BMIN Delayed	 
+$17,BSTR Booster Reset for Booster Studies Cycle; generated at GMPS BMIN Delayed 
+$19,BSTR Booster Reset for NUMI Beam Cycle; generated at GMPS BMIN Delayed 
+$1A,NTF Parasitic Beam Permit; made @ positive transition of TLG output    
+$1B,NTF	Parasitic Beam Inhibit; made @ negative transition of TLG output  
+$1C,BSTR Booster Reset for MI/RR Studies; generated at GMPS BMIN Delayed  
+$1D,BSTR Booster Reset for MiniBooNe Beam Cycle; generated at GMPS BMIN Delayed	
+$20,MI MI Reset for 120 GeV Short Flattop Fixed Target Beam 
+$21,MI MI Reset for 120 GeV Long Flattop Fixed Target Beam    
+$23,MI MI Reset for NUMI Beam Cycle  
+$29,MI MI Reset for MI Studies/120 GeV to Muon Cycle  
+$2A,MI MI Reset for NuMI Beam with RR Cycle 
+$2B,MI MI Reset for MI Studies  
+$2D,MI MI Reset for 8 GeV Beam to Muon/MI Studies	  
+$2E,MI MI Reset for MI Studies 
+$30,SWYD Switchyard Reset for 120 GeV; Long Spill Extracted Beam 
+$32,SWYD Switchyard Pre Pulse 
+$80,MUON Muon Reset for non 8GeV protons to Muon via MI 
+$85,MUON Muon Reset for 8 GeV protons to Muon via MI	 
+$8E,MUON/MI P1 & P2 Beamline Reset	   
+$90,MUON Muon Reset #1 for 8 GeV Protons from RR to M3 Line	  
+$91,MUON Muon Reset #2 for 8 GeV Protons from RR to M3 Line    
+$93,MUON "Muon Reset #1 for 8 GeV Protons from RR to Muon Target" 
+$94,MUON "Muon Reset #2 for 8 GeV Protons from RR to Muon Target"    
+$A5,NUMI NUMI Reset for Beam	      
+$AC,CLK	MI Abort Charge Event 
+$AE,NUM	NUMI Beamline Ramp Rest 
+$BE,MI Booster beam to Recycler	  
+$BF,MI Booster Beam to Main Injector/MiniBooNE 
+$DE,RR RR Reset for beam to MI 
+$E0,RR RR Reset for RR Studies 
+$E1,RR RR Reset for MI Studies   
+$E2,RR RR Reset for Fixed Target	 
+$E3,RR RR Reset for NuMI	 
+$E9,RR RR Reset for Muon  
+$EA,MTA MTA Pre-Event   
+$F1,BST Clear $0E Holdoff 
