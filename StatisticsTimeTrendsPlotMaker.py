@@ -38,7 +38,7 @@ nopdf     = options.nopdf
 outdir      = options.outdir
 quick       = options.quick
 maxparams    = int(options.maxparams)
-paramcount = 0
+paramcount = 1
 outfilename = options.outfilename
 dbname      = options.dbname
 
@@ -96,9 +96,11 @@ for paramresult in paramsresults:
 
 paramcount = 0
 # Carve out a subplot for each param's stats
-fig, axs = plt.subplots(len(paramnames)+1)
+fig, axs = plt.subplots(len(paramnames))
+print (paramnames)
 fig.set_size_inches(9.0, 5.*len(paramnames))
-plt.tight_layout(h_pad=10.0, pad=1.0)
+plt.tight_layout(rect=[0.05, 0, 1, 1])
+
 
 # Loop over params and their statistics from the database. Save into handy dictionaries as lists for plotting ease.
 datadict = {}
@@ -113,14 +115,15 @@ for param in paramnames:
         if debug: print (statresult)
         stat = statresult[0]
         # Skip the std for now
-        if stat == 'std': continue 
-        if debug: print (param, stat)
+        #if stat == 'std': continue 
+        if debug or True: print (param, stat)
         # Make a dataframe for the time series of values
         slctstr = 'SELECT statval, epochUTCsec FROM ACNETparameterStats WHERE paramname LIKE "{}" AND statname LIKE "{}"'.format(param,stat)
         slctstr += ' ORDER BY epochUTCsec;'
         if debug: print (slctstr)
         # Create a dataframe from the results for this statistic for this parameter
         df = pd.read_sql_query(slctstr, conn)
+        if debug: print(df)
         datadict[param][stat] = {} # subsubdictionary for param and stat
         datadict[param][stat]['X'] = df['epochUTCsec'].tolist()
         datadict[param][stat]['Y'] = df['statval'].tolist()
@@ -130,18 +133,22 @@ for param in paramnames:
         
         if debug: print ('Dataframe for '+stat+':\n',df)
         # Add data to this subplot for this stat
-        #axs[paramcount-1].plot('epochUTCsec', 'statval', data=df)
         offsetlist = np.ones(len(datadict[param][stat]['Y'])) * paramyoffset
         print ('paramyoffset: ',paramyoffset)
-        axs[paramcount-1].plot( datadict[param][stat]['X'], 
-                                datadict[param][stat]['Y'] + offsetlist)
-        axs[paramcount-1].patch.set_visible(False)
+
+        X = pd.Series(datadict[param][stat]['X'])
+        X = pd.to_datetime(X, unit='s')
+        print (X)
+        # or plot_date() maybe?
+        axs[paramcount-1].plot_date( X,
+                                     datadict[param][stat]['Y'] + offsetlist)
+        #axs[paramcount-1].patch.set_visible(False)
         axs[paramcount-1].spines['left'].set_visible(True)
         axs[paramcount-1].spines['right'].set_visible(False)
         axs[paramcount-1].spines['top'].set_visible(False)
         axs[paramcount-1].spines['bottom'].set_visible(False)
-        axs[paramcount-1].set_ylabel(param)
-        #axs[paramcount-1].axis('off')
+        axs[paramcount-1].set_ylabel(param, labelpad=5, fontsize=20)
+        print (param)
 
 
 #yticklabels = []
