@@ -25,7 +25,8 @@ def make_wide(formatter, w=150, h=36):
 
 
 ### Make a parser
-parser = argparse.ArgumentParser(formatter_class=make_wide(argparse.ArgumentDefaultsHelpFormatter))
+parser = argparse.ArgumentParser(description='Loops over keys of an HDF5 file, derives stats for values and time, saves into a database.',
+                                 formatter_class=make_wide(argparse.ArgumentDefaultsHelpFormatter))
 ### Add options
 parser.add_argument ('infilename')
 parser.add_argument ('-v', dest='debug', action="store_true", default=False,
@@ -131,6 +132,7 @@ if not noplots:
 for key in  filekeys:
     if quick and keynum > maxparams: break
     keynum += 1
+
     # Temporary: Dataframe of two columns:  values and timestamps for this param ('key')
     tempdf = pd.read_hdf(infilename, key)
     if debug: print ("  "+key+"  shape:", tempdf.shape)
