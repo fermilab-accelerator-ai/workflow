@@ -28,8 +28,8 @@ optional arguments:<br>
   --days DAYS          Days before start time to request data? (default: 0).<br>
   --hours HOURS        Hours before start time to request data? (default: 0)<br>
   --minutes MINUTES    Minutes before start time to request data? (default: 0)<br>
-  --seconds SECONDS    Seconds before start time to request data? (default: 0<br>
-                       unless all are zero, then 1).
+  --seconds SECONDS    Seconds before start time to request data? (default: 0
+                       unless all are zero, then 1).<br>
   --draftdir DRAFTDIR  Directory to draft output file while appending.
                        (default: pwd)<br>
   --outdir OUTDIR      Directory to write final output file. (default: pwd)<br>
