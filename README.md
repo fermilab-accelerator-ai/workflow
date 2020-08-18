@@ -1,6 +1,10 @@
 # workflow
 Machinery to pull data from DataLogger, wrangle data, inspect data, keep it all running
 
+# Resources
+Events in TCLK and what they mean: https://www-bd.fnal.gov/controls/hardware_vogel/tclk.htm
+
+# Data Production
 Special user gmpsai-prod on accelaigpvm01 runs these scripts, mostly through cron jobs.  If you'd like to be able to log in as the special user, contact Jason St. John or others on this list, and we can add your kerberos principal to the .k5login file.  Your ktickets will then let you log in.
 
 Data File Generation:<br>
