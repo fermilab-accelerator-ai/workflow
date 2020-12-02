@@ -111,7 +111,6 @@ URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/date_format='utc_sec
 import GMPSAIutilities as gmpsutils
 deviceNames = gmpsutils.getParamListFromTextFile(textfilename = paramlistfile, debug=debug)
 
-loggernode = 'MLrn'
 URL = URL + loggernode + '+'
 draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
