@@ -41,6 +41,9 @@ parser.add_argument ('--outdir',  dest='outdir', default='',
                      help="Directory to write final output file. (default: pwd)")
 parser.add_argument ('--logger',  dest='loggernode', default='MLrn',
                      help="D43 Data Logger Node name. (default: MLrn)")
+parser.add_argument ('--paramfile',  dest='paramlistfile', default='ParamList.txt',
+                     help="Parameter list file name. (default: ParamList.txt)")
+
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -53,6 +56,7 @@ seconds   = options.seconds
 outdir    = options.outdir
 draftdir  = options.draftdir
 loggernode= options.loggernode
+paramlistfile = options.paramlistfile
 
 # Get the current directory of execution
 abspath = Path().absolute()
@@ -105,7 +109,7 @@ URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/date_format='utc_sec
 
 # Get the list of parameter names 
 import GMPSAIutilities as gmpsutils
-deviceNames = gmpsutils.getParamListFromTextFile(debug=debug)
+deviceNames = gmpsutils.getParamListFromTextFile(textfilename = paramlistfile, debug=debug)
 
 loggernode = 'MLrn'
 URL = URL + loggernode + '+'
