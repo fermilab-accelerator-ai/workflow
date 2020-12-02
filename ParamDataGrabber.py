@@ -10,6 +10,7 @@ import datetime
 from dateutil import parser as dtpars
 import timeit
 import requests
+from urllib.request import urlopen
 import argparse
 from pathlib import Path
 from io import StringIO
@@ -27,6 +28,8 @@ parser.add_argument ('-v', dest='debug', action="store_true", default=False,
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
                      help="YYYY-MM-DD hh:mm:ss (default: last midnight)")
+parser.add_argument ('--maxcount',  dest='maxcount', default=-1,
+                     help="Number of devices in list to process. (default: -1 = all)")
 parser.add_argument ('--days', dest='days', type=float, default=0,
                      help="Days before start time to request data? (default: %(default)s).")
 parser.add_argument ('--hours', dest='hours', type=float, default=0,
@@ -49,6 +52,7 @@ options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
 debug     = options.debug
 stopat    = options.stopat
+maxcount  = int(options.maxcount)
 days      = options.days    
 hours     = options.hours   
 minutes   = options.minutes 
@@ -115,17 +119,24 @@ URL = URL + loggernode + '+'
 draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 
-# Loop over device names, retrieving data from 
+# Loop over device names, retrieving data from the specified logger node
+if maxcount < 0: maxcount = len(deviceNames)
+devicecount = 0
 for deviceName in deviceNames:
+    # Allows early stopping for development dolphins
+    devicecount += 1
+    if devicecount > maxcount: break
+
+    # URL for getting this device's data
     tempURL = URL + deviceName
     if debug: print (tempURL)
 
     # Download device data to a string
-    response = requests.get(tempURL)
+    response = urlopen(tempURL)
     if response is None:
         if debug: print (tempURL+"\n begat no reponse.")
         continue
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.read(), "html.parser")
     str1 = soup.get_text()
     if debug: print (str1)
     if str1.count('No values'): 
