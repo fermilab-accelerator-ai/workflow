@@ -39,6 +39,8 @@ parser.add_argument ('--draftdir',  dest='draftdir', default='',
                      help="Directory to draft output file while appending. (default: pwd)")
 parser.add_argument ('--outdir',  dest='outdir', default='',
                      help="Directory to write final output file. (default: pwd)")
+parser.add_argument ('--logger',  dest='loggernode', default='MLrn',
+                     help="D43 Data Logger Node name. (default: MLrn)")
 ### Get the options and argument values from the parser....
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
@@ -50,6 +52,7 @@ minutes   = options.minutes
 seconds   = options.seconds 
 outdir    = options.outdir
 draftdir  = options.draftdir
+loggernode= options.loggernode
 
 # Get the current directory of execution
 abspath = Path().absolute()
@@ -104,10 +107,10 @@ URL = "http://www-ad.fnal.gov/cgi-bin/acl.pl?acl=logger_get/date_format='utc_sec
 import GMPSAIutilities as gmpsutils
 deviceNames = gmpsutils.getParamListFromTextFile(debug=debug)
 
-D43DataLoggerNode = 'MLrn'
-URL = URL + D43DataLoggerNode + '+'
-draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
-outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+D43DataLoggerNode+'_'+starttime+'_to_'+stopptime+'.h5'
+loggernode = 'MLrn'
+URL = URL + loggernode + '+'
+draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
+outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 
 # Loop over device names, retrieving data from 
 for deviceName in deviceNames:
