@@ -10,7 +10,12 @@ def getParamListFromTextFile(textfilename='ParamList.txt', debug=False):
     for line in lines:
         cleanline = line.strip()
         # This is where we could check for valid param name format. Could. 
-        finallist.append(cleanline)
+        parts = cleanline.split()
+        if not len(parts) == 2: 
+            print (line+"  ...unable to parse node and device.")
+            continue
+        node,device = parts[0],parts[1]
+        finallist.append([node,device])
     if debug: print (finallist)
     return finallist
 
