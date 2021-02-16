@@ -25,6 +25,8 @@ parser = argparse.ArgumentParser(description="usage: %prog [options] <input file
 ### Add options
 parser.add_argument ('-v', dest='debug', action="store_true", default=False,
                      help="Turn on verbose debugging. (default: False)")
+parser.add_argument ('--dryrun', dest='dryrun', action="store_true", default=False,
+                     help="Save no output file. (default: False)")
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
                      help="YYYY-MM-DD hh:mm:ss (default: last midnight)")
@@ -51,6 +53,7 @@ parser.add_argument ('--paramfile',  dest='paramlistfile', default='ParamList.tx
 options = parser.parse_args()
 ### ...and assign them to variables. (No declaration needed, just like bash!)
 debug     = options.debug
+dryrun    = options.dryrun
 stopat    = options.stopat
 maxcount  = int(options.maxcount)
 days      = options.days    
@@ -116,13 +119,14 @@ import GMPSAIutilities as gmpsutils
 deviceNames = gmpsutils.getParamListFromTextFile(textfilename = paramlistfile, debug=debug)
 
 URL = URL + loggernode + '+'
+if debug: print (URL)
 draftfilename = draftdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 outfilename   =   outdir+'/MLParamData_'+unixtimestr+'_From_'+loggernode+'_'+starttime+'_to_'+stopptime+'.h5'
 
 # Loop over device names, retrieving data from the specified logger node
 if maxcount < 0: maxcount = len(deviceNames)
 devicecount = 0
-for deviceName in deviceNames:
+for node, deviceName in deviceNames:
     # Allows early stopping for development dolphins
     devicecount += 1
     if devicecount > maxcount: break
@@ -150,9 +154,9 @@ for deviceName in deviceNames:
     # Set the column names
     df.columns = ['utc_seconds', 'value']
     # Save df to file.
-    df.to_hdf(draftfilename, deviceName, append=True)
+    if not dryrun: df.to_hdf(draftfilename, deviceName, append=True)
 
-if not outfilename == draftfilename:
+if not outfilename == draftfilename and not dryrun:
     if debug: print ("Moving from "+draftfilename+" to "+outfilename+".")
     subprocess.run(["mv "+draftfilename+" "+outfilename,], shell=True, check=True)
 
