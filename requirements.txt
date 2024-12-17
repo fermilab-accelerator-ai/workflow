@@ -4,7 +4,6 @@
 _libgcc_mutex=0.1=conda_forge
 _openmp_mutex=4.5=2_gnu
 alsa-lib=1.2.13=hb9d3cd8_0
-argparse=1.4.0=pypi_0
 beautifulsoup4=4.12.3=pyha770c72_1
 blosc=1.21.6=he440d0b_1
 brotli=1.1.0=hb9d3cd8_2
