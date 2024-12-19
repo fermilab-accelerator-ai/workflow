@@ -30,16 +30,18 @@ parser.add_argument ('--dryrun', dest='dryrun', action="store_true", default=Fal
 # Maybe just a string formatted in UTC datetime.
 parser.add_argument ('--stopat',  dest='stopat', default='',
                      help="YYYY-MM-DD hh:mm:ss (default: last midnight)")
+parser.add_argument ('--startat',  dest='startat', default='',
+                     help="YYYY-MM-DD hh:mm:ss (default: '')")
 parser.add_argument ('--maxcount',  dest='maxcount', default=-1,
                      help="Number of devices in list to process. (default: -1 = all)")
 parser.add_argument ('--days', dest='days', type=float, default=0,
-                     help="Days before start time to request data? (default: %(default)s).")
+                     help="Days before stop time to request data? (default: %(default)s).")
 parser.add_argument ('--hours', dest='hours', type=float, default=0,
-                     help="Hours before start time to request data? (default: %(default)s)")
+                     help="Hours before stop time to request data? (default: %(default)s)")
 parser.add_argument ('--minutes', dest='minutes', type=float, default=0,
-                     help="Minutes before start time to request data? (default: %(default)s)")
+                     help="Minutes before stop time to request data? (default: %(default)s)")
 parser.add_argument ('--seconds', dest='seconds', type=float, default=0,
-                     help="Seconds before start time to request data? (default: %(default)s unless all are zero, then 1).")
+                     help="Seconds before stop time to request data? (default: %(default)s unless all are zero, then 1).")
 parser.add_argument ('--draftdir',  dest='draftdir', default='',
                      help="Directory to draft output file while appending. (default: pwd)")
 parser.add_argument ('--outdir',  dest='outdir', default='',
@@ -55,6 +57,7 @@ options = parser.parse_args()
 debug     = options.debug
 dryrun    = options.dryrun
 stopat    = options.stopat
+startat   = options.startat
 maxcount  = int(options.maxcount)
 days      = options.days    
 hours     = options.hours   
