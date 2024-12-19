@@ -17,6 +17,15 @@ from io import StringIO
 from bs4 import BeautifulSoup
 import subprocess
 
+def read_URL_to_file (URL, filename):
+    with urllib.request.urlopen(URL) as url_returns:
+        data = url_returns.read().decode('utf-8').split('\n')
+        with open(filename, 'w') as f:
+            for datum in data:
+                f.write("%s\n" % datum)                
+    return 
+
+
 # optparse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
 # For instance:
@@ -88,28 +97,30 @@ else:            # or attempt to use the string passed in by user
     stopptime = '{0:%Y-%m-%d+%H:%M:%S}'.format(stopdt)
 
 if debug: print ("Stop time: "+stopptime)
-    
-# If no time interval set, default to 1 second
-if days == 0 and hours == 0 and minutes == 0 and seconds == 0: seconds = 1
 
-if debug:
-    print ("Time interval: days = "+str(days)+
-           ", hours = "  +str(hours  )+
-           ", minutes = "+str(minutes)+
-           ", seconds = "+str(seconds)+".")
+starttime_datetime = None
+if startat != '':
+    if debug: print(f'--startat="{startat}"')
+    try: starttime_datetime = dtpars.parse(startat)
+    except Exception as e:
+        exit (f'Error parsing --start argument: {e}')
+    starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(starttime_datetime)
 
-def read_URL_to_file (URL, filename):
-    with urllib.request.urlopen(URL) as url_returns:
-        data = url_returns.read().decode('utf-8').split('\n')
-        with open(filename, 'w') as f:
-            for datum in data:
-                f.write("%s\n" % datum)                
-    return 
-# Build a datetime interval to offset starttime before stopptime. 
-interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+else: # No --startat argument Maybe we can use d/h/m/s units?
+    # If no time interval set, default to 1 second
+    if days == 0 and hours == 0 and minutes == 0 and seconds == 0: seconds = 1
 
-# Set the time to start the data-series request window
-starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(dtpars.parse(stopptime.replace('+',' ')) - interval)
+    if debug:
+        print ("Time interval: days = "+str(days)+
+               ", hours = "  +str(hours  )+
+               ", minutes = "+str(minutes)+
+               ", seconds = "+str(seconds)+".")
+
+    # Build a datetime interval to offset starttime before stopptime. 
+    interval = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+
+    # Set the time to start the data-series request window
+    starttime = '{0:%Y-%m-%d+%H:%M:%S}'.format(dtpars.parse(stopptime.replace('+',' ')) - interval)
 
 if debug:
     print ('Data request start time:' + starttime)
