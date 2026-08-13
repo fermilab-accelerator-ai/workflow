@@ -161,14 +161,14 @@ for node, deviceName in deviceNames:
         if debug: print (tempURL+"\n "+str1)
         continue
     ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
-    df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
+    df = pd.read_csv(StringIO(str1), header=None, delimiter = r'\s+')
     if len(df) < 1: 
         if debug: print ('Dataframe length < 1.')
         continue #..,Skip event if no data for it.
     # Set the column names
     df.columns = ['utc_seconds', 'value']
     # Save df to file.
-    if not dryrun: df.to_hdf(draftfilename, deviceName, append=True)
+    if not dryrun: df.to_hdf(draftfilename, key=deviceName, append=True)
 
 if not outfilename == draftfilename and not dryrun:
     if debug: print ("Moving from "+draftfilename+" to "+outfilename+".")
