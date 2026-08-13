@@ -9,6 +9,7 @@ import requests
 import argparse
 from pathlib import Path
 from bs4 import BeautifulSoup
+from traceback import print_exc
 
 # ArgParse is outstanding, handling many types and
 # generating a --help very easily.  Typical Python module with named, optional arguments
@@ -117,14 +118,20 @@ for eventdec in range(0, maxEvt+1):
         continue
     soup = BeautifulSoup(response.text, "html.parser")
     str1 = soup.get_text()
-    if debug: print (str1)
+    if debug: print (str1[:1000])
     nodata = False # First time we get a nontrivial response.
     if str1.count('No occurrences of event') > 0: continue
     ## Easy to make a dataframe from the results. And add them to an appropriately keyed group in the hdf5?
-    df = pd.read_csv(StringIO(str1), header=None, delim_whitespace=True)
+    df = pd.read_csv(StringIO(str1), skiprows=5, delimiter = r'\s+') 
     #if len(df) < 1: continue #..,Skip event if no data for it.
     # Set the column names
-    df.columns = ['date','time','SCmicrosec']
+    try: df.columns = ['date','time','SCmicrosec']
+    except Exception as e:
+        print ('Exception:', e.__class__.__name__)
+        print_exc()
+        print (f'DataFrame cols:\n', df.columns)
+        print (f'DataFrame head:\n', df.head())
+        exit()
     # Merge date and time to make datetime. Then drop original columns.
     df['datetime'] = df['date'] + ' ' + df['time'] 
     # Convert to UNIX epoch seconds
@@ -135,7 +142,7 @@ for eventdec in range(0, maxEvt+1):
 
     if debug: print (df)
     # Save df to file.
-    df.to_hdf(draftfilename,'Event'+TCLKevent, append=True)
+    df.to_hdf(draftfilename, key=f'Event{TCLKevent}', append=True)
     if oneAndDone and not nodata:
         print ("'One and done' option -o: Stopped after getting and saving data for $"+TCLKevent)
         break
